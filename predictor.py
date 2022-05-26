@@ -207,22 +207,22 @@ else:
 
     # Creating the architecture
     regressor = Sequential()
-    #add 1st lstm layer: 32 neurons
+    # add 1st layer
     regressor.add(LSTM(units = 512, return_sequences = True, input_shape = (X_train.shape[1], 5)))
     regressor.add(Dropout(rate = 0.2))
 
-    ##add 2nd lstm layer: 50 neurons
+    # 2nd layer
     regressor.add(LSTM(units = 512, return_sequences = True))
     regressor.add(Dropout(rate = 0.2))
 
-    ##add 3th lstm layer
+    # 3rd layer
     regressor.add(LSTM(units = 32, activation = 'relu', return_sequences = False))
     regressor.add(Dropout(rate = 0.2))
 
-    ##add output layer
+    # add output layer
     regressor.add(Dense(units = 1))
 
-    # We introduce callbacks which are:
+    # We introduc callbacks:
     # EarlyStoping: It will stop the traning if score of model didn't increase.
     # ReduceLROnPlateau: Use for reduce the learning rate.
     # ModelCheckpoint: Use for save model only when the score increased
