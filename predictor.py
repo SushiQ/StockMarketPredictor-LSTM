@@ -73,9 +73,9 @@ if oneFeature:
 
     training_set = dataset_train.iloc[:round(size*0.8), 1: 2].values
 
-    scaler = MinMaxScaler(feature_range = (0, 1))
+    #scaler = MinMaxScaler(feature_range = (0, 1))
     #fit: get min/max of train data
-    training_set_scaled = scaler.fit_transform(training_set)
+    #training_set_scaled = scaler.fit_transform(training_set)
 
 
     ## 60 timesteps and 1 output
@@ -117,7 +117,7 @@ if oneFeature:
     regressor.add(Dense(units = 1))
 
     regressor.compile(optimizer = 'adam', loss = 'mean_squared_error')
-    regressor.fit(x = X_train, y = y_train, batch_size = 512, epochs = 15)
+    regressor.fit(x = X_train, y = y_train, batch_size = 512, epochs = 2)
 
 
     # The test data set
@@ -166,29 +166,57 @@ else:
     # Selecting 5 interesting feature
     input_feature = dataset_train[['Open', 'High', 'Low', 'Volume', 'Close']]
     input_data = input_feature.values
-
-    # Normalize the data
-    scaler = MinMaxScaler(feature_range=(0,1))
+    print("type", type(input_data))
+    #scaler = MinMaxScaler(feature_range=(0, 1))
     # input_data[:,:] = scaler.fit_transform(input_data[:,:])
-    input_data = scaler.fit_transform(input_data)
 
-    lookback = 60
+    #input_data = scaler.fit_transform(input_data)
+    # Normalize the data
+    inputnew = []
+    print("going to scale")
+    print("shape input" , input_data.shape)
+    katt = 0
+    rangestuff =8
+    a = np.zeros((int((rangestuff+1)*len(input_data)/rangestuff),5))
+    for i in range(rangestuff):
+
+        scaler = MinMaxScaler(feature_range=(0,1))
+        # input_data[:,:] = scaler.fit_transform(input_data[:,:])
+
+        t = scaler.fit_transform(input_data[int(i*len(input_data)/rangestuff):int((i+1)*len(input_data)/rangestuff),:])
+        a[int(i*len(input_data)/rangestuff):int((i+1)*len(input_data)/rangestuff),:] = t
+
+        inputnew.append(t)
+
+    input_data = a
+
+
+
+    lookback = 30
     total_size = len(dataset_train)
 
     X=[]
     y=[]
+    print("shape input after" , input_data.shape)
     for i in range(0, total_size-lookback): # loop data set with margin 50 as we use 50 days data for prediction
         t=[]
         for j in range(0, lookback): # loop for 50 days
             current_index = i+j
             t.append(input_data[current_index, :]) # get data margin from 50 days with marging i
+
+        # X 12580x 30x 5
+        # t 30 x 5
+
         X.append(t)
+
+
         y.append(input_data[lookback+i, 4])
 
     X, y= np.array(X), np.array(y)
+    print("shapes x_train and y_train")
     print(X.shape, y.shape)
 
-    test_size = 120
+    test_size = 600
 
     X_test = X[-test_size:]
     Y_test = y[-test_size:]
@@ -201,10 +229,13 @@ else:
     X_train = X_train.reshape(X_train.shape[0], lookback, 5)
     X_valid = X_valid.reshape(X_valid.shape[0], lookback, 5)
     X_test = X_test.reshape(X_test.shape[0], lookback, 5)
+
+
+    print("shapes x_train shape x_valid, X-test")
     print(X_train.shape)
     print(X_valid.shape)
     print(X_test.shape)
-
+    print(X_train[1][:][:])
     # Creating the architecture
     regressor = Sequential()
     # add 1st layer
@@ -234,14 +265,15 @@ else:
 
     # regressor.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
     regressor.compile(optimizer='adam', loss='mean_squared_error', metrics=[soft_acc])
-    regressor.fit(X_train, y_train, epochs=30, batch_size=32, validation_data=(X_valid, y_valid), callbacks=callbacks)
+    regressor.fit(X_train, y_train, epochs=60, batch_size=32, validation_data=(X_valid, y_valid), callbacks=callbacks)
     predicted_value = regressor.predict(X_test)
 
     plt.figure(figsize=(18, 8))
-    plt.plot(predicted_value, label = 'Predicted price')
-    plt.plot(Y_test, label = 'Real price')
-    plt.title("Close price of stocks")
+    plt.plot(predicted_value, label = 'Predicted Value')
+    plt.plot(Y_test, label = 'Real Value')
+    plt.legend(loc='upper left')
+    plt.title("Close Value of S&P 500")
     plt.xlabel("Days")
-    plt.ylabel("Stock Opening Price")
+    plt.ylabel("Close Value")
     plt.show()
 
